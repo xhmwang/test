@@ -1,0 +1,8 @@
+cascading.flow.local
+cascading.flow.local.planner
+cascading.flow.local.stream
+cascading.platform.local
+cascading.scheme.local
+cascading.stats.local
+cascading.tap.local
+cascading.tap.local.io

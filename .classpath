@@ -7,5 +7,25 @@
 	<classpathentry kind="lib" path="/Users/xiaohuiwang/test/lib/jackson-databind-2.3.1.jar"/>
 	<classpathentry kind="lib" path="/Users/xiaohuiwang/test/lib/jackson-annotations-2.3.1.jar"/>
 	<classpathentry kind="lib" path="/Users/xiaohuiwang/test/lib/jackson-core-2.3.1.jar"/>
+	<classpathentry kind="lib" path="/Users/xiaohuiwang/test/lib/cascading-2.5.2/cascading-local-2.5.2.jar"/>
+	<classpathentry kind="lib" path="/Users/xiaohuiwang/test/lib/cascading-2.5.2/cascading-hadoop2-mr1-2.5.2.jar"/>
+	<classpathentry kind="lib" path="/Users/xiaohuiwang/test/lib/cascading-2.5.2/cascading-hadoop-2.5.2.jar"/>
+	<classpathentry kind="lib" path="/Users/xiaohuiwang/test/lib/cascading-2.5.2/cascading-core-2.5.2.jar"/>
+	<classpathentry kind="lib" path="/Users/xiaohuiwang/test/lib/cascading-2.5.2/lib/cascading-core/jgrapht-jdk1.6-0.8.1.jar"/>
+	<classpathentry kind="lib" path="/Users/xiaohuiwang/.m2/repository/log4j/log4j/1.2.12/log4j-1.2.12.jar"/>
+	<classpathentry kind="lib" path="/Users/xiaohuiwang/test/lib/slf4j/slf4j-log4j12-1.7.6.jar"/>
+	<classpathentry kind="lib" path="/Users/xiaohuiwang/test/lib/slf4j/slf4j-api-1.7.6.jar"/>
+	<classpathentry kind="lib" path="/Users/xiaohuiwang/test/lib/hadoop-1.2.1/hadoop-core-1.2.1.jar"/>
+	<classpathentry kind="lib" path="/Users/xiaohuiwang/test/lib/commons-logging-1.1.3/commons-logging-1.1.3.jar"/>
+	<classpathentry kind="lib" path="/Users/xiaohuiwang/test/lib/commons-configuration-1.10/commons-configuration-1.10.jar"/>
+	<classpathentry kind="lib" path="/Users/xiaohuiwang/test/lib/commons-lang3-3.2.1/commons-lang3-3.2.1.jar"/>
+	<classpathentry kind="lib" path="/Users/xiaohuiwang/test/lib/commons-lang-2.6/commons-lang-2.6.jar"/>
+	<classpathentry kind="lib" path="/Users/xiaohuiwang/test/lib/commons-codec-1.9/commons-codec-1.9.jar"/>
+	<classpathentry kind="lib" path="/Users/xiaohuiwang/test/lib/jackson-mapper-asl-1.7.0.jar"/>
+	<classpathentry kind="lib" path="/Users/xiaohuiwang/test/lib/jackson-core-asl-1.5.5.jar"/>
+	<classpathentry kind="lib" path="/Users/xiaohuiwang/test/lib/commons-httpclient-3.0.jar"/>
+	<classpathentry kind="lib" path="/Users/xiaohuiwang/test/lib/httpclient-4.0.jar"/>
+	<classpathentry kind="lib" path="/Users/xiaohuiwang/test/lib/httpcore-4.0.1.jar"/>
+	<classpathentry kind="lib" path="/Users/xiaohuiwang/test/lib/jets3t-0.6.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

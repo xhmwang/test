@@ -1,43 +1,55 @@
 package com.quanttus.etl;
 
-import java.net.URL;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class VitalsFlattener {
 
-	public String[] flatten(String json) throws Exception {
-		String[] flatjsonArray = {"",""};
+	public String flatten(String json) throws Exception {
+		
 		ObjectMapper mapper = new ObjectMapper();
 
 		Vitals value = (Vitals) mapper.readValue(json, Vitals.class);
+		int len = value.vitals.length;
+		if (0 == len || null == value.vitals) {
+			return "{}"; 
+		}
+
+		String res = null;
+		StringBuffer sb = new StringBuffer();
 		
-		//String jsonString = mapper.writeValueAsString(value);
-		for (int i = 0; i < value.vitals.length; i++) {
+		for (int i = 0; i < len; i++) {
 			
 			FlattenedVitals fv = new FlattenedVitals();
 			
 			fv.userId = value.userId;
 			fv.deviceId = value.deviceId;
+			fv.payloadVersion = value.payloadVersion;
+			fv.firmwareVersion = value.firmwareVersion;
 			fv.timestamp = value.vitals[i].timestamp;
 			fv.hr = value.vitals[i].hr;
+			fv.hrConf = value.vitals[i].hrConf;
 			fv.sys = value.vitals[i].sys;
+			fv.dia = value.vitals[i].dia;
+			fv.bpConf = value.vitals[i].bpConf;
 					
-			String flatjson = mapper.writeValueAsString(fv); System.out.println(flatjson);
-			flatjsonArray[i] = flatjson;
+			String flatjson = mapper.writeValueAsString(fv); //System.out.println(flatjson);
+			sb.append(flatjson);
+			
 		}
 		
-		return flatjsonArray;
+		res = "{" + sb.toString() + "}";
+		return res;
 	}
 
 	public static void main(String[] args) throws Exception {
-		URL input = new URL("file:///tmp/ingest");
-		String json = "{  \"userId\": \"049e1a03-31cc-4858-9f53-65ad7cc32208\",  \"deviceId\": \"1e22a9ff-018e-4a79-8a48-ca1e455d8f9e\",  \"payloadVersion\": 0,  \"firmwareVersion\": 1,  \"vitals\": [     {\"timestamp\":\"2014-01-29T12:30:00.000-05:00\",\"hr\":28.2,\"hrConf\":0.85,\"sys\":32.0,\"dia\":12.7, \"bpConf\":0.99},     {\"timestamp\":\"2014-01-29T12:30:01.000-05:00\",\"hr\":38.2,\"hrConf\":0.75,\"sys\":35.0,\"dia\":14.1, \"bpConf\":0.92}  ] } ";
+		String json = "{\"userId\":\"763b1e66-5c4a-48f3-9b4a-b7724c180e4d\",\"deviceId\":\"a5920579-1d08-472d-adc6-cb0ce56c447d\",\"payloadVersion\":0,\"firmwareVersion\":1,\"vitals\":[{\"timestamp\":\"2014-02-03T20:04:01.000+05:00\",\"hr\":-305,\"hrConf\":95,\"sys\":-255,\"dia\":300,\"bpConf\":95},{\"timestamp\":\"2014-02-03T20:04:02.000+05:00\",\"hr\":-305,\"hrConf\":95,\"sys\":-255,\"dia\":300,\"bpConf\":95},{\"timestamp\":\"2014-02-03T20:04:03.000+05:00\",\"hr\":-305,\"hrConf\":95,\"sys\":-255,\"dia\":300,\"bpConf\":95},{\"timestamp\":\"2014-02-03T20:04:04.000+05:00\",\"hr\":-305,\"hrConf\":95,\"sys\":-255,\"dia\":300,\"bpConf\":95},{\"timestamp\":\"2014-02-03T20:04:05.000+05:00\",\"hr\":-305,\"hrConf\":95,\"sys\":-255,\"dia\":300,\"bpConf\":95},{\"timestamp\":\"2014-02-03T20:04:06.000+05:00\",\"hr\":-305,\"hrConf\":95,\"sys\":-255,\"dia\":300,\"bpConf\":95},{\"timestamp\":\"2014-02-03T20:04:07.000+05:00\",\"hr\":-305,\"hrConf\":95,\"sys\":-255,\"dia\":300,\"bpConf\":95},{\"timestamp\":\"2014-02-03T20:04:08.000+05:00\",\"hr\":-305,\"hrConf\":95,\"sys\":-255,\"dia\":300,\"bpConf\":95},{\"timestamp\":\"2014-02-03T20:04:09.000+05:00\",\"hr\":-305,\"hrConf\":95,\"sys\":-255,\"dia\":300,\"bpConf\":95},{\"timestamp\":\"2014-02-03T20:04:10.000+05:00\",\"hr\":-305,\"hrConf\":95,\"sys\":-255,\"dia\":300,\"bpConf\":95},{\"timestamp\":\"2014-02-03T20:04:11.000+05:00\",\"hr\":-305,\"hrConf\":95,\"sys\":-255,\"dia\":300,\"bpConf\":95}]}";
+		//String json = "{}";
+		//System.out.println(json);
+
+		String res = new VitalsFlattener().flatten(json);
 		
-		System.out.println(json);
-		String[] res = null;
-		res = new VitalsFlattener().flatten(json);
-		System.out.println(res);
+		//for (int i = 0; i < res.length; i++)
+			System.out.println(res);
 	}
 
 }

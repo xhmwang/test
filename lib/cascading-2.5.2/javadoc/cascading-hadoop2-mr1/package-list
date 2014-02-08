@@ -1,0 +1,16 @@
+cascading.flow.hadoop
+cascading.flow.hadoop.planner
+cascading.flow.hadoop.stream
+cascading.flow.hadoop.util
+cascading.flow.hadoop2
+cascading.platform.hadoop
+cascading.platform.hadoop2
+cascading.scheme.hadoop
+cascading.stats.hadoop
+cascading.tap.hadoop
+cascading.tap.hadoop.io
+cascading.tap.hadoop.util
+cascading.tuple.hadoop
+cascading.tuple.hadoop.collect
+cascading.tuple.hadoop.io
+cascading.tuple.hadoop.util

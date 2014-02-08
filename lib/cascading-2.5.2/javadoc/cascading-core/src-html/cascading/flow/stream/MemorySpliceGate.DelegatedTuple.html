@@ -1,0 +1,357 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (c) 2007-2014 Concurrent, Inc. All Rights Reserved.<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Project and contact information: http://www.cascading.org/<a name="line.4"></a>
+<FONT color="green">005</FONT>     *<a name="line.5"></a>
+<FONT color="green">006</FONT>     * This file is part of the Cascading project.<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.8"></a>
+<FONT color="green">009</FONT>     * you may not use this file except in compliance with the License.<a name="line.9"></a>
+<FONT color="green">010</FONT>     * You may obtain a copy of the License at<a name="line.10"></a>
+<FONT color="green">011</FONT>     *<a name="line.11"></a>
+<FONT color="green">012</FONT>     *     http://www.apache.org/licenses/LICENSE-2.0<a name="line.12"></a>
+<FONT color="green">013</FONT>     *<a name="line.13"></a>
+<FONT color="green">014</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.14"></a>
+<FONT color="green">015</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.15"></a>
+<FONT color="green">016</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.16"></a>
+<FONT color="green">017</FONT>     * See the License for the specific language governing permissions and<a name="line.17"></a>
+<FONT color="green">018</FONT>     * limitations under the License.<a name="line.18"></a>
+<FONT color="green">019</FONT>     */<a name="line.19"></a>
+<FONT color="green">020</FONT>    <a name="line.20"></a>
+<FONT color="green">021</FONT>    package cascading.flow.stream;<a name="line.21"></a>
+<FONT color="green">022</FONT>    <a name="line.22"></a>
+<FONT color="green">023</FONT>    import java.util.ArrayList;<a name="line.23"></a>
+<FONT color="green">024</FONT>    import java.util.Collection;<a name="line.24"></a>
+<FONT color="green">025</FONT>    import java.util.Collections;<a name="line.25"></a>
+<FONT color="green">026</FONT>    import java.util.Comparator;<a name="line.26"></a>
+<FONT color="green">027</FONT>    import java.util.HashMap;<a name="line.27"></a>
+<FONT color="green">028</FONT>    import java.util.IdentityHashMap;<a name="line.28"></a>
+<FONT color="green">029</FONT>    import java.util.Map;<a name="line.29"></a>
+<FONT color="green">030</FONT>    import java.util.Set;<a name="line.30"></a>
+<FONT color="green">031</FONT>    import java.util.TreeSet;<a name="line.31"></a>
+<FONT color="green">032</FONT>    import java.util.concurrent.atomic.AtomicInteger;<a name="line.32"></a>
+<FONT color="green">033</FONT>    <a name="line.33"></a>
+<FONT color="green">034</FONT>    import cascading.flow.FlowProcess;<a name="line.34"></a>
+<FONT color="green">035</FONT>    import cascading.flow.FlowProps;<a name="line.35"></a>
+<FONT color="green">036</FONT>    import cascading.flow.planner.Scope;<a name="line.36"></a>
+<FONT color="green">037</FONT>    import cascading.pipe.Splice;<a name="line.37"></a>
+<FONT color="green">038</FONT>    import cascading.tuple.Fields;<a name="line.38"></a>
+<FONT color="green">039</FONT>    import cascading.tuple.Tuple;<a name="line.39"></a>
+<FONT color="green">040</FONT>    import cascading.tuple.util.TupleBuilder;<a name="line.40"></a>
+<FONT color="green">041</FONT>    import cascading.tuple.util.TupleHasher;<a name="line.41"></a>
+<FONT color="green">042</FONT>    import org.slf4j.Logger;<a name="line.42"></a>
+<FONT color="green">043</FONT>    import org.slf4j.LoggerFactory;<a name="line.43"></a>
+<FONT color="green">044</FONT>    <a name="line.44"></a>
+<FONT color="green">045</FONT>    import static cascading.tuple.util.TupleViews.createNarrow;<a name="line.45"></a>
+<FONT color="green">046</FONT>    <a name="line.46"></a>
+<FONT color="green">047</FONT>    /**<a name="line.47"></a>
+<FONT color="green">048</FONT>     *<a name="line.48"></a>
+<FONT color="green">049</FONT>     */<a name="line.49"></a>
+<FONT color="green">050</FONT>    public abstract class MemorySpliceGate extends SpliceGate<a name="line.50"></a>
+<FONT color="green">051</FONT>      {<a name="line.51"></a>
+<FONT color="green">052</FONT>      private static final Logger LOG = LoggerFactory.getLogger( MemorySpliceGate.class );<a name="line.52"></a>
+<FONT color="green">053</FONT>    <a name="line.53"></a>
+<FONT color="green">054</FONT>      protected final Map&lt;Duct, Integer&gt; posMap = new IdentityHashMap&lt;Duct, Integer&gt;();<a name="line.54"></a>
+<FONT color="green">055</FONT>    <a name="line.55"></a>
+<FONT color="green">056</FONT>      protected Comparator&lt;Tuple&gt;[] groupComparators;<a name="line.56"></a>
+<FONT color="green">057</FONT>      protected Comparator&lt;Tuple&gt;[] valueComparators;<a name="line.57"></a>
+<FONT color="green">058</FONT>      protected TupleHasher groupHasher;<a name="line.58"></a>
+<FONT color="green">059</FONT>      protected boolean nullsAreNotEqual;<a name="line.59"></a>
+<FONT color="green">060</FONT>    <a name="line.60"></a>
+<FONT color="green">061</FONT>      protected Set&lt;Tuple&gt; keys;<a name="line.61"></a>
+<FONT color="green">062</FONT>      protected Map&lt;Tuple, Collection&lt;Tuple&gt;&gt;[] keyValues;<a name="line.62"></a>
+<FONT color="green">063</FONT>    <a name="line.63"></a>
+<FONT color="green">064</FONT>      protected MemoryCoGroupClosure closure;<a name="line.64"></a>
+<FONT color="green">065</FONT>    <a name="line.65"></a>
+<FONT color="green">066</FONT>      protected int numIncomingPaths;<a name="line.66"></a>
+<FONT color="green">067</FONT>    <a name="line.67"></a>
+<FONT color="green">068</FONT>      protected final AtomicInteger count = new AtomicInteger( 0 );<a name="line.68"></a>
+<FONT color="green">069</FONT>    <a name="line.69"></a>
+<FONT color="green">070</FONT>      public MemorySpliceGate( FlowProcess flowProcess, Splice splice )<a name="line.70"></a>
+<FONT color="green">071</FONT>        {<a name="line.71"></a>
+<FONT color="green">072</FONT>        super( flowProcess, splice );<a name="line.72"></a>
+<FONT color="green">073</FONT>        }<a name="line.73"></a>
+<FONT color="green">074</FONT>    <a name="line.74"></a>
+<FONT color="green">075</FONT>      @Override<a name="line.75"></a>
+<FONT color="green">076</FONT>      public void bind( StreamGraph streamGraph )<a name="line.76"></a>
+<FONT color="green">077</FONT>        {<a name="line.77"></a>
+<FONT color="green">078</FONT>        super.bind( streamGraph ); // finds allPrevious<a name="line.78"></a>
+<FONT color="green">079</FONT>    <a name="line.79"></a>
+<FONT color="green">080</FONT>        numIncomingPaths = streamGraph.countAllEventingPathsTo( this );<a name="line.80"></a>
+<FONT color="green">081</FONT>    <a name="line.81"></a>
+<FONT color="green">082</FONT>        orderDucts( streamGraph );<a name="line.82"></a>
+<FONT color="green">083</FONT>        }<a name="line.83"></a>
+<FONT color="green">084</FONT>    <a name="line.84"></a>
+<FONT color="green">085</FONT>      // we must make a new Tuple instance to wrap the incoming copy<a name="line.85"></a>
+<FONT color="green">086</FONT>      protected TupleBuilder createDefaultNarrowBuilder( final Fields incomingFields, final Fields narrowFields )<a name="line.86"></a>
+<FONT color="green">087</FONT>        {<a name="line.87"></a>
+<FONT color="green">088</FONT>        return new TupleBuilder()<a name="line.88"></a>
+<FONT color="green">089</FONT>        {<a name="line.89"></a>
+<FONT color="green">090</FONT>        int[] pos = incomingFields.getPos( narrowFields );<a name="line.90"></a>
+<FONT color="green">091</FONT>    <a name="line.91"></a>
+<FONT color="green">092</FONT>        @Override<a name="line.92"></a>
+<FONT color="green">093</FONT>        public Tuple makeResult( Tuple input, Tuple output )<a name="line.93"></a>
+<FONT color="green">094</FONT>          {<a name="line.94"></a>
+<FONT color="green">095</FONT>          return createNarrow( pos, input );<a name="line.95"></a>
+<FONT color="green">096</FONT>          }<a name="line.96"></a>
+<FONT color="green">097</FONT>        };<a name="line.97"></a>
+<FONT color="green">098</FONT>        }<a name="line.98"></a>
+<FONT color="green">099</FONT>    <a name="line.99"></a>
+<FONT color="green">100</FONT>      @Override<a name="line.100"></a>
+<FONT color="green">101</FONT>      public void initialize()<a name="line.101"></a>
+<FONT color="green">102</FONT>        {<a name="line.102"></a>
+<FONT color="green">103</FONT>        super.initialize();<a name="line.103"></a>
+<FONT color="green">104</FONT>    <a name="line.104"></a>
+<FONT color="green">105</FONT>        Comparator defaultComparator = (Comparator) flowProcess.newInstance( (String) flowProcess.getProperty( FlowProps.DEFAULT_ELEMENT_COMPARATOR ) );<a name="line.105"></a>
+<FONT color="green">106</FONT>    <a name="line.106"></a>
+<FONT color="green">107</FONT>        Fields[] compareFields = new Fields[ orderedPrevious.length ];<a name="line.107"></a>
+<FONT color="green">108</FONT>        groupComparators = new Comparator[ orderedPrevious.length ];<a name="line.108"></a>
+<FONT color="green">109</FONT>    <a name="line.109"></a>
+<FONT color="green">110</FONT>        if( splice.isSorted() )<a name="line.110"></a>
+<FONT color="green">111</FONT>          valueComparators = new Comparator[ orderedPrevious.length ];<a name="line.111"></a>
+<FONT color="green">112</FONT>    <a name="line.112"></a>
+<FONT color="green">113</FONT>        int size = splice.isGroupBy() ? 1 : incomingScopes.size();<a name="line.113"></a>
+<FONT color="green">114</FONT>    <a name="line.114"></a>
+<FONT color="green">115</FONT>        for( int i = 0; i &lt; size; i++ )<a name="line.115"></a>
+<FONT color="green">116</FONT>          {<a name="line.116"></a>
+<FONT color="green">117</FONT>          Scope incomingScope = incomingScopes.get( i );<a name="line.117"></a>
+<FONT color="green">118</FONT>    <a name="line.118"></a>
+<FONT color="green">119</FONT>          int pos = splice.isGroupBy() ? 0 : splice.getPipePos().get( incomingScope.getName() );<a name="line.119"></a>
+<FONT color="green">120</FONT>    <a name="line.120"></a>
+<FONT color="green">121</FONT>          // we want the comparators<a name="line.121"></a>
+<FONT color="green">122</FONT>          Fields groupFields = splice.getKeySelectors().get( incomingScope.getName() );<a name="line.122"></a>
+<FONT color="green">123</FONT>    <a name="line.123"></a>
+<FONT color="green">124</FONT>          compareFields[ pos ] = groupFields; // used for finding hashers<a name="line.124"></a>
+<FONT color="green">125</FONT>    <a name="line.125"></a>
+<FONT color="green">126</FONT>          if( groupFields.size() == 0 )<a name="line.126"></a>
+<FONT color="green">127</FONT>            groupComparators[ pos ] = groupFields;<a name="line.127"></a>
+<FONT color="green">128</FONT>          else<a name="line.128"></a>
+<FONT color="green">129</FONT>            groupComparators[ pos ] = new SparseTupleComparator( Fields.asDeclaration( groupFields ), defaultComparator );<a name="line.129"></a>
+<FONT color="green">130</FONT>    <a name="line.130"></a>
+<FONT color="green">131</FONT>          groupComparators[ pos ] = splice.isSortReversed() ? Collections.reverseOrder( groupComparators[ pos ] ) : groupComparators[ pos ];<a name="line.131"></a>
+<FONT color="green">132</FONT>    <a name="line.132"></a>
+<FONT color="green">133</FONT>          if( sortFields != null )<a name="line.133"></a>
+<FONT color="green">134</FONT>            {<a name="line.134"></a>
+<FONT color="green">135</FONT>            // we want the comparators, so don't use sortFields array<a name="line.135"></a>
+<FONT color="green">136</FONT>            Fields sortFields = splice.getSortingSelectors().get( incomingScope.getName() );<a name="line.136"></a>
+<FONT color="green">137</FONT>            valueComparators[ pos ] = new SparseTupleComparator( valuesFields[ pos ], sortFields, defaultComparator );<a name="line.137"></a>
+<FONT color="green">138</FONT>    <a name="line.138"></a>
+<FONT color="green">139</FONT>            if( splice.isSortReversed() )<a name="line.139"></a>
+<FONT color="green">140</FONT>              valueComparators[ pos ] = Collections.reverseOrder( valueComparators[ pos ] );<a name="line.140"></a>
+<FONT color="green">141</FONT>            }<a name="line.141"></a>
+<FONT color="green">142</FONT>          }<a name="line.142"></a>
+<FONT color="green">143</FONT>    <a name="line.143"></a>
+<FONT color="green">144</FONT>        nullsAreNotEqual = !areNullsEqual();<a name="line.144"></a>
+<FONT color="green">145</FONT>    <a name="line.145"></a>
+<FONT color="green">146</FONT>        if( nullsAreNotEqual )<a name="line.146"></a>
+<FONT color="green">147</FONT>          LOG.debug( "treating null values in Tuples at not equal during in memory grouping" );<a name="line.147"></a>
+<FONT color="green">148</FONT>    <a name="line.148"></a>
+<FONT color="green">149</FONT>        Comparator[] hashers = TupleHasher.merge( compareFields );<a name="line.149"></a>
+<FONT color="green">150</FONT>        groupHasher = defaultComparator != null || !TupleHasher.isNull( hashers ) ? new TupleHasher( defaultComparator, hashers ) : null;<a name="line.150"></a>
+<FONT color="green">151</FONT>    <a name="line.151"></a>
+<FONT color="green">152</FONT>        keys = createKeySet();<a name="line.152"></a>
+<FONT color="green">153</FONT>    <a name="line.153"></a>
+<FONT color="green">154</FONT>        count.set( numIncomingPaths ); // the number of paths incoming<a name="line.154"></a>
+<FONT color="green">155</FONT>        }<a name="line.155"></a>
+<FONT color="green">156</FONT>    <a name="line.156"></a>
+<FONT color="green">157</FONT>      private boolean areNullsEqual()<a name="line.157"></a>
+<FONT color="green">158</FONT>        {<a name="line.158"></a>
+<FONT color="green">159</FONT>        try<a name="line.159"></a>
+<FONT color="green">160</FONT>          {<a name="line.160"></a>
+<FONT color="green">161</FONT>          Tuple tupleWithNull = Tuple.size( 1 );<a name="line.161"></a>
+<FONT color="green">162</FONT>    <a name="line.162"></a>
+<FONT color="green">163</FONT>          return groupComparators[ 0 ].compare( tupleWithNull, tupleWithNull ) == 0;<a name="line.163"></a>
+<FONT color="green">164</FONT>          }<a name="line.164"></a>
+<FONT color="green">165</FONT>        catch( Exception exception )<a name="line.165"></a>
+<FONT color="green">166</FONT>          {<a name="line.166"></a>
+<FONT color="green">167</FONT>          return true; // assume we have an npe or something and they don't expect to see nulls<a name="line.167"></a>
+<FONT color="green">168</FONT>          }<a name="line.168"></a>
+<FONT color="green">169</FONT>        }<a name="line.169"></a>
+<FONT color="green">170</FONT>    <a name="line.170"></a>
+<FONT color="green">171</FONT>      @Override<a name="line.171"></a>
+<FONT color="green">172</FONT>      public void prepare()<a name="line.172"></a>
+<FONT color="green">173</FONT>        {<a name="line.173"></a>
+<FONT color="green">174</FONT>        super.prepare();<a name="line.174"></a>
+<FONT color="green">175</FONT>    <a name="line.175"></a>
+<FONT color="green">176</FONT>        keyValues = createKeyValuesArray();<a name="line.176"></a>
+<FONT color="green">177</FONT>    <a name="line.177"></a>
+<FONT color="green">178</FONT>        makePosMap( posMap );<a name="line.178"></a>
+<FONT color="green">179</FONT>    <a name="line.179"></a>
+<FONT color="green">180</FONT>        closure = new MemoryCoGroupClosure( flowProcess, splice.getNumSelfJoins(), keyFields, valuesFields );<a name="line.180"></a>
+<FONT color="green">181</FONT>    <a name="line.181"></a>
+<FONT color="green">182</FONT>        if( grouping != null &amp;&amp; splice.getJoinDeclaredFields() != null &amp;&amp; splice.getJoinDeclaredFields().isNone() )<a name="line.182"></a>
+<FONT color="green">183</FONT>          grouping.joinerClosure = closure;<a name="line.183"></a>
+<FONT color="green">184</FONT>        }<a name="line.184"></a>
+<FONT color="green">185</FONT>    <a name="line.185"></a>
+<FONT color="green">186</FONT>      protected Comparator getKeyComparator()<a name="line.186"></a>
+<FONT color="green">187</FONT>        {<a name="line.187"></a>
+<FONT color="green">188</FONT>        if( groupComparators.length &gt; 0 &amp;&amp; groupComparators[ 0 ] != null )<a name="line.188"></a>
+<FONT color="green">189</FONT>          return groupComparators[ 0 ];<a name="line.189"></a>
+<FONT color="green">190</FONT>    <a name="line.190"></a>
+<FONT color="green">191</FONT>        return new Comparator&lt;Comparable&gt;()<a name="line.191"></a>
+<FONT color="green">192</FONT>        {<a name="line.192"></a>
+<FONT color="green">193</FONT>        @Override<a name="line.193"></a>
+<FONT color="green">194</FONT>        public int compare( Comparable lhs, Comparable rhs )<a name="line.194"></a>
+<FONT color="green">195</FONT>          {<a name="line.195"></a>
+<FONT color="green">196</FONT>          return lhs.compareTo( rhs );<a name="line.196"></a>
+<FONT color="green">197</FONT>          }<a name="line.197"></a>
+<FONT color="green">198</FONT>        };<a name="line.198"></a>
+<FONT color="green">199</FONT>        }<a name="line.199"></a>
+<FONT color="green">200</FONT>    <a name="line.200"></a>
+<FONT color="green">201</FONT>      protected Set&lt;Tuple&gt; createKeySet()<a name="line.201"></a>
+<FONT color="green">202</FONT>        {<a name="line.202"></a>
+<FONT color="green">203</FONT>        return Collections.synchronizedSet( new TreeSet&lt;Tuple&gt;( getKeyComparator() ) );<a name="line.203"></a>
+<FONT color="green">204</FONT>        }<a name="line.204"></a>
+<FONT color="green">205</FONT>    <a name="line.205"></a>
+<FONT color="green">206</FONT>      /**<a name="line.206"></a>
+<FONT color="green">207</FONT>       * This lets us just replace an old map and let the gc cleanup, vs clearing each map<a name="line.207"></a>
+<FONT color="green">208</FONT>       *<a name="line.208"></a>
+<FONT color="green">209</FONT>       * @return of type Map<a name="line.209"></a>
+<FONT color="green">210</FONT>       */<a name="line.210"></a>
+<FONT color="green">211</FONT>      protected Map&lt;Tuple, Collection&lt;Tuple&gt;&gt;[] createKeyValuesArray()<a name="line.211"></a>
+<FONT color="green">212</FONT>        {<a name="line.212"></a>
+<FONT color="green">213</FONT>        // Ducts use identity for equality<a name="line.213"></a>
+<FONT color="green">214</FONT>        Map&lt;Tuple, Collection&lt;Tuple&gt;&gt;[] valueMap = new Map[ orderedPrevious.length ];<a name="line.214"></a>
+<FONT color="green">215</FONT>    <a name="line.215"></a>
+<FONT color="green">216</FONT>        int start = isBlockingStreamed() ? 0 : 1;<a name="line.216"></a>
+<FONT color="green">217</FONT>        for( int i = start; i &lt; orderedPrevious.length; i++ )<a name="line.217"></a>
+<FONT color="green">218</FONT>          {<a name="line.218"></a>
+<FONT color="green">219</FONT>          if( orderedPrevious[ i ] == null ) // only true for local mode<a name="line.219"></a>
+<FONT color="green">220</FONT>            continue;<a name="line.220"></a>
+<FONT color="green">221</FONT>    <a name="line.221"></a>
+<FONT color="green">222</FONT>          valueMap[ i ] = createTupleMap();<a name="line.222"></a>
+<FONT color="green">223</FONT>          }<a name="line.223"></a>
+<FONT color="green">224</FONT>    <a name="line.224"></a>
+<FONT color="green">225</FONT>        return valueMap;<a name="line.225"></a>
+<FONT color="green">226</FONT>        }<a name="line.226"></a>
+<FONT color="green">227</FONT>    <a name="line.227"></a>
+<FONT color="green">228</FONT>      protected Map&lt;Tuple, Collection&lt;Tuple&gt;&gt; createTupleMap()<a name="line.228"></a>
+<FONT color="green">229</FONT>        {<a name="line.229"></a>
+<FONT color="green">230</FONT>        return new HashMap&lt;Tuple, Collection&lt;Tuple&gt;&gt;()<a name="line.230"></a>
+<FONT color="green">231</FONT>        {<a name="line.231"></a>
+<FONT color="green">232</FONT>        @Override<a name="line.232"></a>
+<FONT color="green">233</FONT>        public Collection&lt;Tuple&gt; get( Object object )<a name="line.233"></a>
+<FONT color="green">234</FONT>          {<a name="line.234"></a>
+<FONT color="green">235</FONT>          Collection&lt;Tuple&gt; value = super.get( object );<a name="line.235"></a>
+<FONT color="green">236</FONT>    <a name="line.236"></a>
+<FONT color="green">237</FONT>          if( value == null )<a name="line.237"></a>
+<FONT color="green">238</FONT>            {<a name="line.238"></a>
+<FONT color="green">239</FONT>            value = new ArrayList&lt;Tuple&gt;();<a name="line.239"></a>
+<FONT color="green">240</FONT>    <a name="line.240"></a>
+<FONT color="green">241</FONT>            super.put( (Tuple) object, value );<a name="line.241"></a>
+<FONT color="green">242</FONT>            }<a name="line.242"></a>
+<FONT color="green">243</FONT>    <a name="line.243"></a>
+<FONT color="green">244</FONT>          return value;<a name="line.244"></a>
+<FONT color="green">245</FONT>          }<a name="line.245"></a>
+<FONT color="green">246</FONT>        };<a name="line.246"></a>
+<FONT color="green">247</FONT>        }<a name="line.247"></a>
+<FONT color="green">248</FONT>    <a name="line.248"></a>
+<FONT color="green">249</FONT>      /**<a name="line.249"></a>
+<FONT color="green">250</FONT>       * This allows the tuple to honor the hasher and comparators, if any<a name="line.250"></a>
+<FONT color="green">251</FONT>       *<a name="line.251"></a>
+<FONT color="green">252</FONT>       * @param object the tuple to wrap<a name="line.252"></a>
+<FONT color="green">253</FONT>       * @return a DelegatedTuple instance<a name="line.253"></a>
+<FONT color="green">254</FONT>       */<a name="line.254"></a>
+<FONT color="green">255</FONT>      protected final Tuple getDelegatedTuple( Tuple object )<a name="line.255"></a>
+<FONT color="green">256</FONT>        {<a name="line.256"></a>
+<FONT color="green">257</FONT>        if( groupHasher == null )<a name="line.257"></a>
+<FONT color="green">258</FONT>          return object;<a name="line.258"></a>
+<FONT color="green">259</FONT>    <a name="line.259"></a>
+<FONT color="green">260</FONT>        return new DelegatedTuple( object );<a name="line.260"></a>
+<FONT color="green">261</FONT>        }<a name="line.261"></a>
+<FONT color="green">262</FONT>    <a name="line.262"></a>
+<FONT color="green">263</FONT>      protected abstract boolean isBlockingStreamed();<a name="line.263"></a>
+<FONT color="green">264</FONT>    <a name="line.264"></a>
+<FONT color="green">265</FONT>      protected class DelegatedTuple extends Tuple<a name="line.265"></a>
+<FONT color="green">266</FONT>        {<a name="line.266"></a>
+<FONT color="green">267</FONT>        public DelegatedTuple( Tuple wrapped )<a name="line.267"></a>
+<FONT color="green">268</FONT>          {<a name="line.268"></a>
+<FONT color="green">269</FONT>          // pass it in to prevent one being allocated<a name="line.269"></a>
+<FONT color="green">270</FONT>          super( Tuple.elements( wrapped ) );<a name="line.270"></a>
+<FONT color="green">271</FONT>          }<a name="line.271"></a>
+<FONT color="green">272</FONT>    <a name="line.272"></a>
+<FONT color="green">273</FONT>        @Override<a name="line.273"></a>
+<FONT color="green">274</FONT>        public boolean equals( Object object )<a name="line.274"></a>
+<FONT color="green">275</FONT>          {<a name="line.275"></a>
+<FONT color="green">276</FONT>          return compareTo( object ) == 0;<a name="line.276"></a>
+<FONT color="green">277</FONT>          }<a name="line.277"></a>
+<FONT color="green">278</FONT>    <a name="line.278"></a>
+<FONT color="green">279</FONT>        @Override<a name="line.279"></a>
+<FONT color="green">280</FONT>        public int compareTo( Object other )<a name="line.280"></a>
+<FONT color="green">281</FONT>          {<a name="line.281"></a>
+<FONT color="green">282</FONT>          return groupComparators[ 0 ].compare( this, (Tuple) other );<a name="line.282"></a>
+<FONT color="green">283</FONT>          }<a name="line.283"></a>
+<FONT color="green">284</FONT>    <a name="line.284"></a>
+<FONT color="green">285</FONT>        @Override<a name="line.285"></a>
+<FONT color="green">286</FONT>        public int hashCode()<a name="line.286"></a>
+<FONT color="green">287</FONT>          {<a name="line.287"></a>
+<FONT color="green">288</FONT>          return groupHasher.hashCode( this );<a name="line.288"></a>
+<FONT color="green">289</FONT>          }<a name="line.289"></a>
+<FONT color="green">290</FONT>        }<a name="line.290"></a>
+<FONT color="green">291</FONT>      }<a name="line.291"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>
